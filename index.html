@@ -1,0 +1,202 @@
+from zipfile import ZipFile
+
+# Define the path to the HTML file and the zip archive
+html_file_path = "/mnt/data/index.html"
+zip_file_path = "/mnt/data/siddha_analyzer.zip"
+
+# Write the HTML content to a file (simulated, as content is already known)
+html_content = """<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Siddha Body Type Analyzer</title>
+  <style>
+    body {
+      font-family: 'Times New Roman', serif;
+      background: linear-gradient(to right, #e0eafc, #cfdef3);
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+    .section {
+      background: #fff;
+      padding: 15px;
+      margin: 10px auto;
+      max-width: 700px;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .section p, label {
+      margin-bottom: 8px;
+      display: block;
+    }
+    .results {
+      background: #d0ffd6;
+      padding: 15px;
+      margin-top: 20px;
+      border-radius: 10px;
+      max-width: 700px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    button {
+      display: block;
+      margin: 20px auto;
+      padding: 10px 25px;
+      font-size: 16px;
+      font-family: 'Times New Roman', serif;
+      cursor: pointer;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 8px;
+    }
+    select, input[type="text"], input[type="number"] {
+      font-family: 'Times New Roman', serif;
+      padding: 5px;
+      width: 100%;
+      box-sizing: border-box;
+      margin-top: 5px;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Siddha Body Type Analyzer</h1>
+  <form id="quizForm">
+    <div class="section">
+      <label for="name">Name:</label>
+      <input type="text" id="name" name="name" required />
+
+      <label for="age">Age:</label>
+      <input type="number" id="age" name="age" required />
+
+      <label for="sex">Sex:</label>
+      <select id="sex" name="sex" required>
+        <option value="Male">Male</option>
+        <option value="Female">Female</option>
+        <option value="Other">Other</option>
+      </select>
+
+      <label for="occupation">Occupation:</label>
+      <input type="text" id="occupation" name="occupation" required />
+    </div>
+  </form>
+
+  <form id="traitsForm"></form>
+  <button onclick="calculateType()">Submit</button>
+  <div class="results" id="results"></div>
+
+  <script>
+    const questions = [
+      { question: "Memory", options: ["Forgetful and fluctuating", "Sharp and precise", "Steady and long-lasting"] },
+      { question: "Sleep", options: ["Disturbed or light", "Moderate and adequate", "Deep and prolonged"] },
+      { question: "Dreams", options: ["Fearful or strange", "Fiery or aggressive", "Romantic or peaceful"] },
+      { question: "Intolerance", options: ["Cold weather", "Heat", "Dampness"] },
+      { question: "Pulse", options: ["Snake-like (irregular)", "Frog-like (throbbing)", "Swan-like (slow and steady)"] },
+      { question: "Body Temperature", options: ["Cool body", "Warm or hot body", "Cold with possible dampness"] },
+      { question: "Body Weight", options: ["Underweight", "Medium", "Overweight"] },
+      { question: "Food Intake", options: ["Irregular appetite", "Strong appetite", "Low appetite"] },
+      { question: "Urine Colour", options: ["Pale yellow", "Dark yellow", "Clear or whitish"] },
+      { question: "Stool", options: ["Dry or hard", "Loose or frequent", "Well-formed"] },
+      { question: "Neikuri", options: ["Scattered oil streak", "Central streak", "Stable, rounded streak"] },
+      { question: "Commonly Occurring Diseases", options: ["Joint pains, nervous issues", "Skin issues, ulcers", "Cough, cold, asthma"] },
+      { question: "Body Built", options: ["Thin and tall", "Moderate build", "Stout or broad"] },
+      { question: "Hair", options: ["Dry and frizzy", "Soft and scanty", "Thick and oily"] },
+      { question: "Eyes", options: ["Small and active", "Sharp and red-tinted", "Big and attractive"] },
+      { question: "Ears", options: ["Dry or rough", "Normal", "Smooth and cool"] },
+      { question: "Tongue", options: ["Dry and rough", "Red or inflamed", "Moist and pale"] },
+      { question: "Salivation", options: ["Scanty", "Moderate", "Excessive"] },
+      { question: "Taste Priority", options: ["Bitter/astringent", "Sour/salty", "Sweet"] },
+      { question: "Teeth", options: ["Irregular or protruded", "Sharp", "Strong and white"] },
+      { question: "Voice", options: ["Low or hoarse", "Sharp and commanding", "Soft and pleasant"] },
+      { question: "Speech", options: ["Fast and jumpy", "Clear and sharp", "Slow and steady"] },
+      { question: "Skin Complexion", options: ["Dark and dry", "Reddish and hot", "Fair and moist"] },
+      { question: "Body Odour", options: ["Mild or none", "Strong or sour", "Sweet or earthy"] },
+      { question: "Gunam", options: ["Fearful, anxious", "Angry, bold", "Calm, loyal"] }
+    ];
+
+    const traitMapping = {
+      "Vatha": 0,
+      "Pitha": 0,
+      "Kabha": 0
+    };
+
+    const form = document.getElementById("traitsForm");
+    questions.forEach((q, index) => {
+      const container = document.createElement("div");
+      container.className = "section";
+      const label = document.createElement("p");
+      label.textContent = `${index + 1}. ${q.question}`;
+      container.appendChild(label);
+
+      const select = document.createElement("select");
+      select.name = `q${index}`;
+
+      q.options.forEach((optionText, i) => {
+        const option = document.createElement("option");
+        option.value = ["Vatha", "Pitha", "Kabha"][i];
+        option.textContent = optionText;
+        select.appendChild(option);
+      });
+
+      container.appendChild(select);
+      form.appendChild(container);
+    });
+
+    function calculateType() {
+      traitMapping.Vatha = 0;
+      traitMapping.Pitha = 0;
+      traitMapping.Kabha = 0;
+
+      const formData = new FormData(document.getElementById("traitsForm"));
+      for (let entry of formData.entries()) {
+        const type = entry[1];
+        if (traitMapping.hasOwnProperty(type)) {
+          traitMapping[type]++;
+        }
+      }
+
+      const sorted = Object.entries(traitMapping).sort((a, b) => b[1] - a[1]);
+      let result = "";
+
+      if (sorted[0][1] === sorted[1][1] && sorted[1][1] === sorted[2][1]) {
+        result = "Balanced: Sama Vatha-Pitha-Kabha";
+      } else if (sorted[0][1] === sorted[1][1]) {
+        result = `${sorted[0][0]}-${sorted[1][0]} type`;
+      } else {
+        result = `${sorted[0][0]}-${sorted[1][0]} type`;
+      }
+
+      const name = document.getElementById("name").value;
+      const age = document.getElementById("age").value;
+      const sex = document.getElementById("sex").value;
+      const occupation = document.getElementById("occupation").value;
+
+      document.getElementById("results").innerHTML = `
+        <h2>Personal Details:</h2>
+        <p><strong>Name:</strong> ${name}</p>
+        <p><strong>Age:</strong> ${age}</p>
+        <p><strong>Sex:</strong> ${sex}</p>
+        <p><strong>Occupation:</strong> ${occupation}</p>
+        <h2>Your Body Type: ${result}</h2>
+      `;
+    }
+  </script>
+</body>
+</html>
+"""
+
+# Write the HTML file
+with open(html_file_path, "w") as f:
+    f.write(html_content)
+
+# Create a ZIP archive containing the HTML file
+with ZipFile(zip_file_path, "w") as zipf:
+    zipf.write(html_file_path, arcname="index.html")
+
+zip_file_path
