@@ -1,11 +1,4 @@
-from zipfile import ZipFile
-
-# Define the path to the HTML file and the zip archive
-html_file_path = "/mnt/data/index.html"
-zip_file_path = "/mnt/data/siddha_analyzer.zip"
-
-# Write the HTML content to a file (simulated, as content is already known)
-html_content = """<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -186,14 +179,3 @@ html_content = """<!DOCTYPE html>
   </script>
 </body>
 </html>
-"""
-
-# Write the HTML file
-with open(html_file_path, "w") as f:
-    f.write(html_content)
-
-# Create a ZIP archive containing the HTML file
-with ZipFile(zip_file_path, "w") as zipf:
-    zipf.write(html_file_path, arcname="index.html")
-
-zip_file_path
